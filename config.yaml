@@ -1,0 +1,19 @@
+app:
+  name: red-alert-listener
+  version: 0.0.1
+  debug: true
+  log_file: messages.log
+
+urls:
+  tzevaadom_api: https://api.tzevaadom.co.il/notifications
+
+mongodb:
+  host: localhost
+  port: 27017
+  user: admin
+  password: secret
+  db_name: alert_notifications
+  raw_notifications_collection: raw_notifications
+  parsed_notifications_collection: parsed_notifications
+  locations_collection: locations
+

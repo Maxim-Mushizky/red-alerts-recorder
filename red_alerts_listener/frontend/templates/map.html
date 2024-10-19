@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detected Points</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('map_blueprint.static', filename='css/styles.css') }}">
+
+    <style>
+        #map {
+            height: 500px;  /* Set the height of the map */
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <!-- Custom JS -->
+    <script src="{{ url_for('map_blueprint.static', filename='js/app.js') }}"></script>
+
+    <script>
+        // Initialize the map in JavaScript
+        var map = L.map('map').setView([31.7683, 35.2137], 10);  // Center the map on Jerusalem
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Example of detected points (lat, lon)
+<!--        var detectedPoints = [-->
+<!--            { lat: 31.7683, lon: 35.2137, name: "Jerusalem" },-->
+<!--            { lat: 32.0853, lon: 34.7818, name: "Tel Aviv" }-->
+<!--        ];-->
+
+        // Loop through the points and add them to the map
+        detectedPoints.forEach(function(point) {
+            L.marker([point.lat, point.lon])
+                .addTo(map)
+                .bindPopup(point.name);
+        });
+    </script>
+</body>
+</html>
