@@ -6,7 +6,8 @@ import aiohttp
 import asyncio
 
 from red_alerts_listener.backend.config_reader import config
-from red_alerts_listener.backend.database_collection_handlers import LocationsCollectionHandler, RawAlertsLocationHandler, \
+from red_alerts_listener.backend.database_collection_handlers import LocationsCollectionHandler, \
+    RawAlertsLocationHandler, \
     ParsedAlertsCollectionHandler
 from red_alerts_listener.backend.logger import logger
 from red_alerts_listener.backend.schemas import (
@@ -26,6 +27,11 @@ class RedAlertNotificationsListener:
         self.locations_collection_handler = locations_collection_handler
         self.parsed_alerts_collection_handler = parsed_alerts_collection_handler
         self.interval_in_sec = interval_in_sec
+        self._notification_ids: list[str] = []
+
+    @property
+    def notification_ids(self) -> list[str]:
+        return self._notification_ids
 
     def _get_red_alert_notifications(self) -> Optional[list[dict]]:
         response = requests.get(self.URL)
@@ -52,11 +58,12 @@ class RedAlertNotificationsListener:
         location_ids = []
 
         if raw_id := self.raw_alerts_collection_handler.add_new_notification(notification):
+            self._notification_ids.append(raw_id)
             logger.info(f"Added notification to raw_alerts collection. id: {raw_id}")
         if parsed_id := self.parsed_alerts_collection_handler.add_new_notification_from_raw(notification):
             logger.info(f"Added notification to parsed_alerts collection. id: {parsed_id}")
         for city in notification.cities:
-            if location_id := self.locations_collection_handler.add_new_city_location(city):
+            if location_id := self.locations_collection_handler.add_new_location(city):
                 location_ids.append(location_id)
                 logger.info(f"Added new city location to locations collection. id: {location_id}")
 

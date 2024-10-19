@@ -40,7 +40,7 @@ def populate_all_collections_from_raw_notifications_collection():
     for raw_notification in raw_notifications:
         try:
             id_for_parsed_collection = parsed_notifications_handler.add_new_notification_from_raw(raw_notification)
-            ids_for_loc_collection = [locations_handler.add_new_city_location(city) for city in raw_notification.cities]
+            ids_for_loc_collection = [locations_handler.add_new_location(city) for city in raw_notification.cities]
         except Exception as e:
             logger.warning(f"Couldn't finished populating one of the collections. reason: {e}")
         else:

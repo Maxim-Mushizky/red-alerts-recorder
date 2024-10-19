@@ -1,38 +1,16 @@
-import abc
 from datetime import datetime
 from typing import Type, Optional, Any, Union
 
 from red_alerts_listener.backend.config_reader import config
 from red_alerts_listener.backend.logger import logger
 
+from red_alerts_listener.backend import interfaces
 from red_alerts_listener.backend.mongo_adapter import MongoDBAdapter
 from red_alerts_listener.backend.object_builders import LocationBuilder, ParsedNotificationBuilder
 from red_alerts_listener.backend.schemas import RedAlertNotification, SavedNotification
 
 
-class AbcAlertsDataBaseHandlers(abc.ABC):
-    BASE_URI = 'mongodb'
-
-    def __init__(self, adapter: Type[MongoDBAdapter],
-                 host: str,
-                 port: int,
-                 alerts_collection: str,
-                 db_name: str) -> None:
-        self._uri = adapter.build_connection_uri(self.BASE_URI, host, port)
-        self._db_name = db_name
-        self.adapter = adapter(self._uri, self._db_name)
-        self.raw_alerts_collection = alerts_collection
-
-    @abc.abstractmethod
-    def add_new_notification(self):
-        ...
-
-    @abc.abstractmethod
-    def add_multiple_new_notifications(self):
-        ...
-
-
-class LocationsCollectionHandler:
+class LocationsCollectionHandler(interfaces.AbstractLocationsCollection):
     BASE_URI = 'mongodb'
 
     def __init__(self, adapter: Type[MongoDBAdapter] = MongoDBAdapter,
@@ -41,19 +19,14 @@ class LocationsCollectionHandler:
                  collection: str = config.mongodb.locations_collection,
                  db_name: str = config.mongodb.db_name,
                  set_new_index_key: Optional[str] = None) -> None:
-        self._uri = adapter.build_connection_uri(self.BASE_URI, host, port)
-        self._db_name = db_name
-        self.adapter = adapter(self._uri, self._db_name)
-        self.collection = collection
-        if set_new_index_key:
-            self.adapter.add_new_index_key(collection, set_new_index_key)
+        super().__init__(adapter, host, port, collection, db_name, set_new_index_key)
 
-    def find_location_by_city(self, city: str) -> Optional[dict[str, Any]]:
-        query = {"location": city}
+    def find_location(self, location: str) -> Optional[dict[str, Any]]:
+        query = {"location": location}
         return self.adapter.find_one(self.collection, query)
 
-    def add_new_city_location(self, city: str) -> Optional[str]:
-        if not self.find_location_by_city(city):
+    def add_new_location(self, city: str) -> Optional[str]:
+        if not self.find_location(city):
             geo_location = LocationBuilder.build_location_for_city(city)
             if geo_location.lon and geo_location.lat:
                 logger.info(f"Added location: {geo_location}")
@@ -62,7 +35,7 @@ class LocationsCollectionHandler:
         return None
 
 
-class RawAlertsLocationHandler:
+class RawAlertsLocationHandler(interfaces.AbstractRedAlertCollection):
     BASE_URI = 'mongodb'
 
     def __init__(self, adapter: Type[MongoDBAdapter] = MongoDBAdapter,
@@ -71,12 +44,7 @@ class RawAlertsLocationHandler:
                  collection: str = config.mongodb.raw_notifications_collection,
                  db_name: str = config.mongodb.db_name,
                  set_new_index_key: Optional[str] = None) -> None:
-        self._uri = adapter.build_connection_uri(self.BASE_URI, host, port)
-        self._db_name = db_name
-        self.adapter = adapter(self._uri, self._db_name)
-        self.collection = collection
-        if set_new_index_key:
-            self.adapter.add_new_index_key(collection, set_new_index_key)
+        super().__init__(adapter, host, port, collection, db_name, set_new_index_key)
 
     def get_all_notifications(self) -> list[dict]:
         query = {}
@@ -104,7 +72,7 @@ class RawAlertsLocationHandler:
         return None
 
 
-class ParsedAlertsCollectionHandler:
+class ParsedAlertsCollectionHandler(interfaces.AbstractRedAlertCollection):
     BASE_URI = 'mongodb'
 
     def __init__(self, adapter: Type[MongoDBAdapter] = MongoDBAdapter,
@@ -113,12 +81,12 @@ class ParsedAlertsCollectionHandler:
                  collection: str = config.mongodb.parsed_notifications_collection,
                  db_name: str = config.mongodb.db_name,
                  set_new_index_key: Optional[str] = None) -> None:
-        self._uri = adapter.build_connection_uri(self.BASE_URI, host, port)
-        self._db_name = db_name
-        self.adapter = adapter(self._uri, self._db_name)
-        self.collection = collection
-        if set_new_index_key:
-            self.adapter.add_new_index_key(collection, set_new_index_key)
+        super().__init__(adapter, host, port, collection, db_name, set_new_index_key)
+
+    def get_all_notifications(self) -> list[dict]:
+        query = {}
+        results = self.adapter.find_all(self.collection, query=query)
+        return results
 
     def find_notification_by_id(self, notification_id: str) -> Optional[dict[str, Any]]:
         query = {"raw_notification.notificationId": notification_id}
