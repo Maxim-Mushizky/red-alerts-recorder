@@ -1,10 +1,11 @@
-from pydantic import BaseModel, Field
-import datetime
+from pydantic import BaseModel
 import enum
 
 
 class KnownThreats(enum.Enum):
     ROCKET = 0
+    TERRORIST = 2
+    EARTH_QUAKE = 3
     UAV = 5
     UNKNOWN = -1
 
